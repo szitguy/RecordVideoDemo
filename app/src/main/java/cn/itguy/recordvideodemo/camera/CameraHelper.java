@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Created by Administrator on 2015/9/10.
  */
-public class CameraManager {
+public class CameraHelper {
 
     public static int getAvailableCamerasCount() {
         return Camera.getNumberOfCameras();
@@ -106,6 +106,38 @@ public class CameraManager {
             result = (info.orientation - degrees + 360) % 360;
         }
         camera.setDisplayOrientation(result);
+    }
+
+    public static void setCameraPreviewSize(android.hardware.Camera camera) {
+//        Camera.Parameters parameters = camera.getParameters();
+//        try {
+//            Camera.Size currentSize = parameters.getPreviewSize();
+//            Log.d(TAG, "current camera preview size w: " + currentSize.width + "---h: " + currentSize.height);
+//
+//            int screenWidth = getResources().getDisplayMetrics().widthPixels;
+//            Log.d(TAG, "screenWidth: " + screenWidth);
+//
+//            Camera.Size willSetSize = currentSize;
+//            Camera.Size tempSize = null;
+//            List<Camera.Size> sizeList = parameters.getSupportedPreviewSizes();
+//            for (Camera.Size size : sizeList) {
+//                Log.d(TAG, "supported camera preview size w: " + size.width + "---h: " + size.height);
+//                // 如果宽高符合4:3要求，并且宽度比之前获得的宽度大，则取当前这个
+//                if (3 * size.width == 4 * size.height) {
+//                    if (tempSize == null || size.width >= tempSize.width) {
+//                        tempSize = size;
+//                    }
+//                }
+//            }
+//
+//            if (tempSize != null)
+//                willSetSize = tempSize;
+//
+//            parameters.setPreviewSize(willSetSize.width, willSetSize.height);
+////            mCamera.setParameters(parameters);
+//        } catch (Exception e) {
+//            Log.d(TAG, "Error setting camera preview parameters: " + e.getMessage());
+//        }
     }
 
 }

@@ -18,12 +18,19 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 import cn.itguy.common.utils.FileUtil;
-import cn.itguy.recordvideodemo.camera.CameraManager;
+import cn.itguy.recordvideodemo.camera.CameraHelper;
 import cn.itguy.recordvideodemo.camera.CameraPreview;
 
 public class MainActivity extends Activity {
 
     private static final String TAG = "MainActivity";
+
+    // 输出宽度
+    private static final int OUTPUT_WIDTH = 320;
+    // 输出高度
+    private static final int OUTPUT_HEIGHT = 240;
+    // 宽高比
+    private static final float RATIO = 1f * OUTPUT_WIDTH / OUTPUT_HEIGHT;
 
     private Camera mCamera;
     private MediaRecorder mMediaRecorder;
@@ -35,48 +42,52 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (!CameraManager.checkCameraHardware(this)) {
+        if (!CameraHelper.checkCameraHardware(this)) {
             Toast.makeText(this, "找不到相机，3秒后退出！", Toast.LENGTH_SHORT).show();
             new Handler().postDelayed(new FinishRunnable(this), 3000);
             return;
         }
 
-        int cameraId = CameraManager.getDefaultCameraID();
+        int cameraId = CameraHelper.getDefaultCameraID();
+        if (!CameraHelper.isCameraFacingBack(cameraId)) {
+            Toast.makeText(this, "找不到后置相机，3秒后退出！", Toast.LENGTH_SHORT).show();
+            new Handler().postDelayed(new FinishRunnable(this), 3000);
+            return;
+        }
         // Create an instance of Camera
-        mCamera = CameraManager.getCameraInstance(cameraId);
+        mCamera = CameraHelper.getCameraInstance(cameraId);
         if (null == mCamera) {
             Toast.makeText(this, "打开相机失败！", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
+        // 设置相机方向
+        CameraHelper.setCameraDisplayOrientation(this, cameraId, mCamera);
         // 设置相机参数
         Camera.Parameters parameters = mCamera.getParameters();
         // 若应用就是用来录制视频的，不用拍照功能，设置RecordingHint可以加快录制启动速度
         parameters.setRecordingHint(true);
+        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
         mCamera.setParameters(parameters);
-        // 设置相机方向
-        CameraManager.setCameraDisplayOrientation(this, cameraId, mCamera);
 
         setContentView(R.layout.activity_main);
         // Create our Preview view and set it as the content of our activity.
         mPreview = new CameraPreview(this, mCamera);
         final FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
         preview.addView(mPreview);
-
+        // 根据需要输出的视频大小调整预览视图高度
         preview.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 preview.getViewTreeObserver().removeGlobalOnLayoutListener(this);
                 ViewGroup.LayoutParams layoutParams = preview.getLayoutParams();
-                layoutParams.height = (int) (3f / 4f * preview.getWidth());
+                layoutParams.height = (int) (preview.getWidth() / RATIO);
                 preview.setLayoutParams(layoutParams);
-
-                ViewGroup.LayoutParams layoutParams2 = mPreview.getLayoutParams();
-                layoutParams2.height = (int) (4f / 3f * preview.getWidth());
-                mPreview.setLayoutParams(layoutParams2);
             }
         });
+
+
 
     }
 
@@ -111,6 +122,10 @@ public class MainActivity extends Activity {
                 break;
             case R.id.button_stop:
                 stopRecord();
+                break;
+            case R.id.button_play:
+                break;
+            case R.id.button_save:
                 break;
         }
     }
