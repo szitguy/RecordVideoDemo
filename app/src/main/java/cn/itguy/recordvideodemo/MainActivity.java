@@ -69,6 +69,8 @@ public class MainActivity extends Activity {
         // 若应用就是用来录制视频的，不用拍照功能，设置RecordingHint可以加快录制启动速度
         parameters.setRecordingHint(true);
         parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+        Camera.Size size = CameraHelper.getCameraPreviewSize(RATIO, parameters);
+        parameters.setPreviewSize(size.width, size.height);
         mCamera.setParameters(parameters);
 
         setContentView(R.layout.activity_main);
