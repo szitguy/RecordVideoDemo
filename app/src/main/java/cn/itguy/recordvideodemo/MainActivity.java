@@ -69,8 +69,12 @@ public class MainActivity extends Activity {
             public void onGlobalLayout() {
                 preview.getViewTreeObserver().removeGlobalOnLayoutListener(this);
                 ViewGroup.LayoutParams layoutParams = preview.getLayoutParams();
-                layoutParams.height = (int) (4f * preview.getWidth() / 3);
+                layoutParams.height = (int) (3f / 4f * preview.getWidth());
                 preview.setLayoutParams(layoutParams);
+
+                ViewGroup.LayoutParams layoutParams2 = mPreview.getLayoutParams();
+                layoutParams2.height = (int) (4f / 3f * preview.getWidth());
+                mPreview.setLayoutParams(layoutParams2);
             }
         });
 

@@ -3,6 +3,7 @@
               android:orientation="vertical"
               android:layout_width="fill_parent"
               android:layout_height="fill_parent"
+              android:keepScreenOn="true"
     >
     <FrameLayout
         android:id="@+id/camera_preview"
