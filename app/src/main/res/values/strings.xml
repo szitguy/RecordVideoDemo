@@ -2,4 +2,6 @@
     <string name="app_name">RecordVideoDemo</string>
 
     <string name="hello_world">Hello world!</string>
+    <string name="title_activity_new_record_video">NewRecordVideoActivity</string>
+    <string name="action_settings">Settings</string>
 </resources>

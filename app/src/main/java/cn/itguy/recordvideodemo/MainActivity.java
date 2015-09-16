@@ -1,6 +1,7 @@
 package cn.itguy.recordvideodemo;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
@@ -114,6 +115,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        // 页面销毁时要停止录制
+        stopRecord();
         releaseMediaRecorder();       // if you are using MediaRecorder, release it first
         releaseCamera();              // release the camera immediately on pause event
         finish();
@@ -131,6 +134,13 @@ public class MainActivity extends Activity {
 
     private void releaseCamera() {
         if (mCamera != null){
+            // 虽然我之前并没有setPreviewCallback，但不加这句的话，
+            // 后面要用到Camera时，调用Camera随便一个方法，都会报
+            // Method called after release() error闪退，推测可能
+            // Camera内存泄露无法真正释放，加上这句可以规避该问题
+            mCamera.setPreviewCallback(null);
+            // 释放前先停止预览
+            mCamera.stopPreview();
             mCamera.release();        // release the camera for other applications
             mCamera = null;
         }
@@ -227,11 +237,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
     private static class FinishRunnable implements Runnable {
 
         private final WeakReference<Activity> mActivityWeakReference;
@@ -258,6 +263,7 @@ public class MainActivity extends Activity {
         private WeakReference<MainActivity> mMainActivityWeakReference;
 
         private boolean isCancelRecord = false;
+        private boolean jumpToNew = true;
 
         public RecordButtonTouchListener(MainActivity mainActivity) {
             mMainActivityWeakReference = new WeakReference<MainActivity>(mainActivity);
@@ -265,7 +271,7 @@ public class MainActivity extends Activity {
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
-            MainActivity mainActivity = mMainActivityWeakReference.get();
+            final MainActivity mainActivity = mMainActivityWeakReference.get();
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     isCancelRecord = false;
@@ -286,6 +292,15 @@ public class MainActivity extends Activity {
                     } else {
                         isCancelRecord = false;
                     }
+
+                    // 跳转到新的视频录制页面
+                    if (jumpToNew && y - mDownY > -CANCEL_RECORD_OFFSET) {
+                        if (null != mainActivity) {
+                            mainActivity.startActivity(new Intent(mainActivity, NewRecordVideoActivity.class));
+                        }
+                        jumpToNew = false;
+                    }
+
                     break;
                 case MotionEvent.ACTION_UP:
                     // cancel?

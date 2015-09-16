@@ -112,6 +112,43 @@ public class CameraHelper {
     }
 
     /**
+     * 获取最优预览尺寸
+     * @param sizes
+     * @param w
+     * @param h
+     * @return
+     */
+    public static Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+        final double ASPECT_TOLERANCE = 0.1;
+        double targetRatio = (double) w / h;
+        if (sizes == null) {
+            return null;
+        }
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
+        int targetHeight = h;
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.width / size.height;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE)
+                continue;
+            if (Math.abs(size.height - targetHeight) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.height - targetHeight);
+            }
+        }
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : sizes) {
+                if (Math.abs(size.height - targetHeight) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.height - targetHeight);
+                }
+            }
+        }
+        return optimalSize;
+    }
+
+    /**
      * 获取相机录制CIF质量视频的宽高
      * @param cameraId
      * @param camera
