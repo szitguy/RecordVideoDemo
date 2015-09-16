@@ -13,6 +13,9 @@ import java.util.Date;
  */
 public class FileUtil {
 
+
+    public static final String FILE_DIR = Environment.getExternalStorageDirectory() + "/cn.itguy.recordvideodemo/MyCameraApp";
+
     public static final int MEDIA_TYPE_IMAGE = 1;
     public static final int MEDIA_TYPE_VIDEO = 2;
 

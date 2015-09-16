@@ -4,8 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
+import android.media.CamcorderProfile;
 import android.os.Build;
-import android.util.Log;
 import android.view.Surface;
 
 import java.util.List;
@@ -112,31 +112,48 @@ public class CameraHelper {
     }
 
     /**
-     * 根据比例获取相机的预览尺寸
-     * @param ratio
-     * @param parameters
+     * 获取相机录制CIF质量视频的宽高
+     * @param cameraId
+     * @param camera
+     * @return
      */
-    public static Camera.Size getCameraPreviewSize(float ratio, Camera.Parameters parameters) {
-        Camera.Size currentSize = parameters.getPreviewSize();
-        Log.d(TAG, "current camera preview size w: " + currentSize.width + "---h: " + currentSize.height);
+    public static Camera.Size getCameraPreviewSizeForVideo(int cameraId, Camera camera) {
+        CamcorderProfile cameraProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+        return camera.new Size(cameraProfile.videoFrameWidth, cameraProfile.videoFrameHeight);
 
-        Camera.Size willSetSize = currentSize;
-        Camera.Size tempSize = null;
-        List<Camera.Size> sizeList = parameters.getSupportedPreviewSizes();
-        for (Camera.Size size : sizeList) {
-            Log.d(TAG, "supported camera preview size w: " + size.width + "---h: " + size.height);
-            // 如果宽高符合4:3要求，并且宽度比之前获得的宽度大，则取当前这个
-            if (1.0f * size.width / size.height == ratio) {
-                if (tempSize == null || size.width >= tempSize.width) {
-                    tempSize = size;
-                }
-            }
-        }
 
-        if (tempSize != null)
-            willSetSize = tempSize;
 
-        return willSetSize;
+//        Camera.Parameters parameters = camera.getParameters();
+//        List<Camera.Size> supportedVideoSizeList = parameters.getSupportedVideoSizes();
+//        if (supportedVideoSizeList == null) {
+//            supportedVideoSizeList = parameters.getSupportedPreviewSizes();
+//        }
+////        for (Camera.Size size : supportedVideoSizeList) {
+////        }
+//        return supportedVideoSizeList.get(supportedVideoSizeList.size() - 4);
+
+
+
+//        Camera.Size currentSize = parameters.getPreviewSize();
+//        Log.d(TAG, "current camera preview size w: " + currentSize.width + "---h: " + currentSize.height);
+//
+//        Camera.Size willSetSize = currentSize;
+//        Camera.Size tempSize = null;
+//        List<Camera.Size> sizeList = parameters.getSupportedPreviewSizes();
+//        for (Camera.Size size : sizeList) {
+//            Log.d(TAG, "supported camera preview size w: " + size.width + "---h: " + size.height);
+//            // 如果宽高符合4:3要求，并且宽度比之前获得的宽度大，则取当前这个
+//            if (1.0f * size.width / size.height == ratio) {
+//                if (tempSize == null || size.width >= tempSize.width) {
+//                    tempSize = size;
+//                }
+//            }
+//        }
+//
+//        if (tempSize != null)
+//            willSetSize = tempSize;
+//
+//        return willSetSize;
     }
 
 }

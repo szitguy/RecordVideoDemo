@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="fill_parent"
               android:layout_height="fill_parent"
               android:keepScreenOn="true"
@@ -11,43 +10,28 @@
         android:layout_height="wrap_content"
         />
 
-    <LinearLayout
+    <FrameLayout
                   android:orientation="horizontal"
+                  android:layout_below="@id/camera_preview"
                   android:layout_width="fill_parent"
                   android:gravity="center"
-                  android:layout_height="wrap_content"
+                  android:background="@android:color/black"
+                  android:layout_height="match_parent"
         >
-        <Button
+        <cn.itguy.common.views.CircleBackgroundTextView
             android:id="@+id/button_start"
-            android:text="录制"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:text="按住拍"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
             android:layout_gravity="center"
             android:onClick="onClick"
             />
-        <Button
-            android:id="@+id/button_stop"
-            android:text="停止"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:onClick="onClick"
-            />
-        <Button
-            android:id="@+id/button_play"
-            android:text="播放"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:onClick="onClick"
-            />
-        <Button
-            android:id="@+id/button_save"
-            android:text="保存"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:onClick="onClick"
-            />
-    </LinearLayout>
-</LinearLayout>
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/filePathTextView"
+        android:layout_width="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_height="wrap_content" />
+
+</RelativeLayout>
