@@ -23,7 +23,7 @@ import cn.itguy.recordvideodemo.camera.NewCameraPreview;
  *
  * @author Martin
  */
-public class NewRecordVideoActivity extends Activity {
+public class NewRecordVideoActivity extends Activity implements Camera.PreviewCallback {
 
     private static final String TAG = "NewRecordVideoActivity";
 
@@ -88,6 +88,7 @@ public class NewRecordVideoActivity extends Activity {
 //        Camera.Size size = CameraHelper.getOptimalPreviewSize(parameters.getSupportedPreviewSizes(), 1, 1);
 //        parameters.setPreviewSize(size.width, size.height);
         mCamera.setParameters(parameters);
+        mCamera.setPreviewCallback(this);
     }
 
     @Override
@@ -152,6 +153,11 @@ public class NewRecordVideoActivity extends Activity {
             // TODO 停止录制
             isRecording = false;
         }
+    }
+
+    @Override
+    public void onPreviewFrame(byte[] data, Camera camera) {
+        // TODO 使用帧数据进行适配录制
     }
 
     private static class RecordButtonTouchListener implements View.OnTouchListener {
