@@ -1,12 +1,12 @@
 .gradle
-/local.properties
+local.properties
 .DS_Store
-/build
-/captures
+build
+captures
 
 # IntelliJ
-/*.iml
-/*.ipr
-/*.iws
-/.idea
-/out/
+*.iml
+*.ipr
+*.iws
+.idea
+out/

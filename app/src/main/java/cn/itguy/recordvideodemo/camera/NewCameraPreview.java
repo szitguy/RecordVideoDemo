@@ -1,6 +1,7 @@
 package cn.itguy.recordvideodemo.camera;
 
 import android.content.Context;
+import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.os.Handler;
 import android.util.Log;
@@ -9,6 +10,9 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import java.lang.ref.WeakReference;
+
+import cn.itguy.camera.CameraHelper;
+import nl.miraclethings.instantvideo.recorder.InstantVideoRecorder;
 
 /** A basic Camera preview class */
 public class NewCameraPreview extends SurfaceView implements SurfaceHolder.Callback {
@@ -24,9 +28,12 @@ public class NewCameraPreview extends SurfaceView implements SurfaceHolder.Callb
 
     private ZoomRunnable mZoomRunnable;
 
-    public NewCameraPreview(Context context, Camera camera) {
+    private InstantVideoRecorder mRecorder;
+
+    public NewCameraPreview(Context context, Camera camera, InstantVideoRecorder recorder) {
         super(context);
         mCamera = camera;
+        mRecorder = recorder;
 
         // Install a SurfaceHolder.Callback so we get notified when the
         // underlying surface is created and destroyed.
@@ -123,6 +130,13 @@ public class NewCameraPreview extends SurfaceView implements SurfaceHolder.Callb
         Camera.Size size = CameraHelper.getOptimalPreviewSize(parameters.getSupportedPreviewSizes(), Math.min(w, h));
         parameters.setPreviewSize(size.width, size.height);
         mCamera.setParameters(parameters);
+
+        // 设置Recorder处理的的图像帧大小
+        mRecorder.setFrameSize(size.width, size.height);
+
+        // 重新开启预览前，设置预览回调，并添加缓存
+        mCamera.setPreviewCallbackWithBuffer(mRecorder);
+        mCamera.addCallbackBuffer(new byte[size.width * size.height * ImageFormat.getBitsPerPixel(parameters.getPreviewFormat()) / 8]);
 
         // start preview with new settings
         try {

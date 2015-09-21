@@ -13,8 +13,8 @@ import java.util.Date;
  */
 public class FileUtil {
 
-
-    public static final String FILE_DIR = Environment.getExternalStorageDirectory() + "/cn.itguy.recordvideodemo/MyCameraApp";
+    public static final String APP_SD_ROOT_DIR = "/cn.itguy.recordvideodemo";
+    public static final String MEDIA_FILE_DIR = APP_SD_ROOT_DIR + "/Media";
 
     public static final int MEDIA_TYPE_IMAGE = 1;
     public static final int MEDIA_TYPE_VIDEO = 2;
@@ -42,7 +42,7 @@ public class FileUtil {
 
 //        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
 //                Environment.DIRECTORY_PICTURES), "MyCameraApp");
-        File mediaStorageDir = new File(Environment.getExternalStorageDirectory() + "/cn.itguy.recordvideodemo", "MyCameraApp");
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory() + MEDIA_FILE_DIR);
         // This location works best if you want the created images to be shared
         // between applications and persist after your app has been uninstalled.
 
@@ -70,4 +70,15 @@ public class FileUtil {
         return mediaFile;
     }
 
+    /**
+     * 删除文件
+     * @param filePath
+     * @return
+     */
+    public static boolean deleteFile(String filePath) {
+        File file = new File(filePath);
+        if (file.exists())
+            return file.delete();
+        return true;
+    }
 }

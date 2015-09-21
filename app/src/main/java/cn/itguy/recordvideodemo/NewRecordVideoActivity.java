@@ -3,6 +3,7 @@ package cn.itguy.recordvideodemo;
 import android.app.Activity;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,19 +12,19 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
 import java.lang.ref.WeakReference;
 
+import cn.itguy.camera.CameraHelper;
 import cn.itguy.common.utils.FileUtil;
-import cn.itguy.recordvideodemo.camera.CameraHelper;
 import cn.itguy.recordvideodemo.camera.NewCameraPreview;
+import nl.miraclethings.instantvideo.recorder.InstantVideoRecorder;
 
 /**
  * 新视频录制页面
  *
  * @author Martin
  */
-public class NewRecordVideoActivity extends Activity implements Camera.PreviewCallback {
+public class NewRecordVideoActivity extends Activity implements View.OnTouchListener {
 
     private static final String TAG = "NewRecordVideoActivity";
 
@@ -36,7 +37,12 @@ public class NewRecordVideoActivity extends Activity implements Camera.PreviewCa
 
     private Camera mCamera;
     private NewCameraPreview mPreview;
-    private boolean isRecording;
+
+    private InstantVideoRecorder mRecorder;
+
+    private static final int CANCEL_RECORD_OFFSET = -100;
+    private float mDownX, mDownY;
+    private boolean isCancelRecord = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,11 +55,15 @@ public class NewRecordVideoActivity extends Activity implements Camera.PreviewCa
             finish();
             return;
         }
-        setupCamera(cameraId);
+        setupCamera();
+        CameraHelper.setCameraDisplayOrientation(this, cameraId, mCamera);
+        // 初始化录像机
+        mRecorder = new InstantVideoRecorder(this, FileUtil.MEDIA_FILE_DIR);
+        mRecorder.setOutputSize(OUTPUT_WIDTH, OUTPUT_HEIGHT);
 
         setContentView(R.layout.activity_main);
         // Create our Preview view and set it as the content of our activity.
-        mPreview = new NewCameraPreview(this, mCamera);
+        mPreview = new NewCameraPreview(this, mCamera, mRecorder);
         final FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
         preview.addView(mPreview);
         // 根据需要输出的视频大小调整预览视图高度
@@ -67,18 +77,16 @@ public class NewRecordVideoActivity extends Activity implements Camera.PreviewCa
             }
         });
 
-        findViewById(R.id.button_start).setOnTouchListener(new RecordButtonTouchListener(this));
+        findViewById(R.id.button_start).setOnTouchListener(this);
 
-        ((TextView) findViewById(R.id.filePathTextView)).setText("请在" + FileUtil.FILE_DIR + "查看录制的视频文件");
+        ((TextView) findViewById(R.id.filePathTextView)).setText("请在" + FileUtil.MEDIA_FILE_DIR + "查看录制的视频文件");
 
     }
 
     /**
      * 设置相机参数
      */
-    private void setupCamera(int cameraId) {
-        // 设置相机方向
-        CameraHelper.setCameraDisplayOrientation(this, cameraId, mCamera);
+    private void setupCamera() {
         // 设置相机参数
         Camera.Parameters parameters = mCamera.getParameters();
         parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
@@ -88,7 +96,6 @@ public class NewRecordVideoActivity extends Activity implements Camera.PreviewCa
 //        Camera.Size size = CameraHelper.getOptimalPreviewSize(parameters.getSupportedPreviewSizes(), 1, 1);
 //        parameters.setPreviewSize(size.width, size.height);
         mCamera.setParameters(parameters);
-        mCamera.setPreviewCallback(this);
     }
 
     @Override
@@ -114,15 +121,16 @@ public class NewRecordVideoActivity extends Activity implements Camera.PreviewCa
      * 开始录制
      */
     private void startRecord() {
-        if (isRecording) {
+        if (mRecorder.isRecording()) {
             Toast.makeText(this, "正在录制中…", Toast.LENGTH_SHORT).show();
             return;
         }
 
         // initialize video camera
         if (prepareVideoRecorder()) {
-            // TODO 录制视频
-            isRecording = true;
+            // 录制视频
+            if (!mRecorder.startRecording())
+                Toast.makeText(this, "录制失败…", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -136,12 +144,6 @@ public class NewRecordVideoActivity extends Activity implements Camera.PreviewCa
             return false;
         }
 
-        File file = FileUtil.getOutputMediaFile(FileUtil.MEDIA_TYPE_VIDEO);
-        if (null == file) {
-            Toast.makeText(this, "创建存储文件失败！", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-
         return true;
     }
 
@@ -149,74 +151,96 @@ public class NewRecordVideoActivity extends Activity implements Camera.PreviewCa
      * 停止录制
      */
     private void stopRecord() {
-        if (isRecording) {
-            // TODO 停止录制
-            isRecording = false;
-        }
+        mRecorder.stopRecording();
     }
 
     @Override
-    public void onPreviewFrame(byte[] data, Camera camera) {
-        // TODO 使用帧数据进行适配录制
+    public boolean onTouch(View v, MotionEvent event) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    isCancelRecord = false;
+                    mDownX = event.getX();
+                    mDownY = event.getY();
+                    startRecord();
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    if (!mRecorder.isRecording())
+                        return false;
+
+                    float y = event.getY();
+                    if (y - mDownY < CANCEL_RECORD_OFFSET) {
+                        if (!isCancelRecord) {
+                            // cancel record
+                            isCancelRecord = true;
+                            Toast.makeText(this, "cancel record", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        isCancelRecord = false;
+                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                    stopRecord();
+                    break;
+            }
+
+        return true;
     }
 
-    private static class RecordButtonTouchListener implements View.OnTouchListener {
+    /**
+     * 开始录制失败回调任务
+     *
+     * @author Martin
+     */
+    public static class StartRecordFailCallbackRunnable implements Runnable {
 
-        private static final int CANCEL_RECORD_OFFSET = -100;
+        private WeakReference<NewRecordVideoActivity> mNewRecordVideoActivityWeakReference;
 
-        private float mDownX, mDownY;
-
-        private WeakReference<NewRecordVideoActivity> mMainActivityWeakReference;
-
-        private boolean isCancelRecord = false;
-
-        public RecordButtonTouchListener(NewRecordVideoActivity newRecordVideoActivity) {
-            mMainActivityWeakReference = new WeakReference<>(newRecordVideoActivity);
+        public StartRecordFailCallbackRunnable(NewRecordVideoActivity activity) {
+            mNewRecordVideoActivityWeakReference = new WeakReference<>(activity);
         }
 
         @Override
-        public boolean onTouch(View v, MotionEvent event) {
-//            NewRecordVideoActivity mainActivity = mMainActivityWeakReference.get();
-//            switch (event.getAction()) {
-//                case MotionEvent.ACTION_DOWN:
-//                    isCancelRecord = false;
-//                    mDownX = event.getX();
-//                    mDownY = event.getY();
-//                    if (null != mainActivity)
-//                        mainActivity.startRecord();
-//                    break;
-//                case MotionEvent.ACTION_MOVE:
-//                    float y = event.getY();
-//                    if (y - mDownY < CANCEL_RECORD_OFFSET) {
-//                        if (!isCancelRecord) {
-//                            // cancel record
-//                            isCancelRecord = true;
-//                            if (null != mainActivity)
-//                                Toast.makeText(mainActivity, "cancel record", Toast.LENGTH_SHORT).show();
-//                        }
-//                    } else {
-//                        isCancelRecord = false;
-//                    }
-//
-//                    if (y - mDownY > -CANCEL_RECORD_OFFSET) {
-//                        if (null != mainActivity)
-//                            mainActivity.startActivity(new Intent(mainActivity, NewRecordVideoActivity.class));
-//                    }
-//
-//                    break;
-//                case MotionEvent.ACTION_UP:
-//                    // cancel?
-////                    if (isCancelRecord) {
-////
-////                    } else {
-////
-////                    }
-//                    if (null != mainActivity)
-//                        mainActivity.stopRecord();
-//                    break;
-//            }
+        public void run() {
+            NewRecordVideoActivity activity;
+            if (null == (activity = mNewRecordVideoActivityWeakReference.get()))
+                return;
 
-            return true;
+            String filePath = activity.mRecorder.getFilePath().getPath();
+            if (!TextUtils.isEmpty(filePath)) {
+                FileUtil.deleteFile(filePath);
+                Toast.makeText(activity, "Start record failed.", Toast.LENGTH_SHORT).show();
+            }
         }
     }
+
+    /**
+     * 停止录制回调任务
+     *
+     * @author Martin
+     */
+    public static class StopRecordCallbackRunnable implements Runnable {
+
+        private WeakReference<NewRecordVideoActivity> mNewRecordVideoActivityWeakReference;
+
+        public StopRecordCallbackRunnable(NewRecordVideoActivity activity) {
+            mNewRecordVideoActivityWeakReference = new WeakReference<>(activity);
+        }
+
+        @Override
+        public void run() {
+            NewRecordVideoActivity activity;
+            if (null == (activity = mNewRecordVideoActivityWeakReference.get()))
+                return;
+
+            String filePath = activity.mRecorder.getFilePath().getPath();
+            if (!TextUtils.isEmpty(filePath)) {
+                if (activity.isCancelRecord) {
+                    FileUtil.deleteFile(filePath);
+                } else {
+                    Toast.makeText(activity, "Video file path: " + filePath, Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
+
 }

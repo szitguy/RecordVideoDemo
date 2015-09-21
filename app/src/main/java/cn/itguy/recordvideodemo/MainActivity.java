@@ -20,8 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 
+import cn.itguy.camera.CameraHelper;
 import cn.itguy.common.utils.FileUtil;
-import cn.itguy.recordvideodemo.camera.CameraHelper;
 import cn.itguy.recordvideodemo.camera.CameraPreview;
 
 public class MainActivity extends Activity {
@@ -86,7 +86,7 @@ public class MainActivity extends Activity {
 
         findViewById(R.id.button_start).setOnTouchListener(new RecordButtonTouchListener(this));
 
-        ((TextView) findViewById(R.id.filePathTextView)).setText("请在" + FileUtil.FILE_DIR + "查看录制的视频文件");
+        ((TextView) findViewById(R.id.filePathTextView)).setText("请在" + FileUtil.MEDIA_FILE_DIR + "查看录制的视频文件");
 
     }
 
