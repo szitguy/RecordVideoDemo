@@ -4,7 +4,7 @@
               android:layout_height="fill_parent"
               android:keepScreenOn="true"
     >
-    <FrameLayout
+    <sz.itguy.wxlikevideo.views.CameraPreviewView
         android:id="@+id/camera_preview"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"

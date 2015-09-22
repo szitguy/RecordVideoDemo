@@ -1,1 +1,1 @@
-include ':app', ":instantVideoRecorderLib"
+include ':app', ":WXLikeVideoRecorderLib"
