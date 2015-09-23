@@ -6,7 +6,6 @@ import android.hardware.Camera;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
-import android.net.Uri;
 import android.util.Log;
 
 import org.bytedeco.javacv.FFmpegFrameFilter;
@@ -15,14 +14,18 @@ import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.FrameFilter;
 import org.bytedeco.javacv.FrameRecorder;
 
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 
 import sz.itguy.utils.FileUtil;
 import sz.itguy.wxlikevideo.views.CameraPreviewView;
 
-public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPreviewView.OnPreviewChangedListener {
+/**
+ * 仿微信录像机
+ *
+ * @author Martin
+ */
+public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPreviewView.PreviewEventListener {
 
     private static final String TAG = "InstantVideoRecorder";
 
@@ -96,6 +99,14 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
     public void setOutputSize(int width, int height) {
         outputWidth = width;
         outputHeight = height;
+    }
+
+    /**
+     * 获取开始时间
+     * @return
+     */
+    public long getStartTime() {
+        return startTime;
     }
 
     //---------------------------------------
@@ -173,8 +184,12 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
         mFilter = null;
     }
 
-    public Uri getFilePath() {
-        return Uri.fromFile(new File(strFinalPath));
+    /**
+     * 获取视频文件路径
+     * @return
+     */
+    public String getFilePath() {
+        return strFinalPath;
     }
 
     /**
@@ -324,12 +339,12 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
      */
     public void setCameraPreviewView(CameraPreviewView cameraPreviewView) {
         mCameraPreviewView = cameraPreviewView;
-        mCameraPreviewView.setOnPreviewChangedListener(this);
+        mCameraPreviewView.addPreviewEventListener(this);
         mCameraPreviewView.setViewWHRatio(1f * outputWidth / outputHeight);
     }
 
     @Override
-    public void onPreStart() {
+    public void onPrePreviewStart() {
         Camera camera = mCameraPreviewView.getCamera();
         Camera.Parameters parameters = camera.getParameters();
         Camera.Size size = parameters.getPreviewSize();
@@ -338,6 +353,18 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
 
         camera.setPreviewCallbackWithBuffer(this);
         camera.addCallbackBuffer(new byte[size.width * size.height * ImageFormat.getBitsPerPixel(parameters.getPreviewFormat()) / 8]);
+    }
+
+    @Override
+    public void onPreviewStarted() {
+    }
+
+    @Override
+    public void onPreviewFailed() {
+    }
+
+    @Override
+    public void onAutoFocusComplete(boolean success) {
     }
 
     //---------------------------------------------

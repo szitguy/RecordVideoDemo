@@ -11,6 +11,8 @@ import android.view.SurfaceView;
 import android.widget.FrameLayout;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
 import sz.itguy.wxlikevideo.camera.CameraHelper;
 
@@ -21,7 +23,7 @@ import sz.itguy.wxlikevideo.camera.CameraHelper;
  */
 public class CameraPreviewView extends FrameLayout {
 
-    private OnPreviewChangedListener mOnPreviewChangedListener;
+    private List<PreviewEventListener> mPreviewEventListenerList = new ArrayList<PreviewEventListener>();
 
     private Camera mCamera;
     private float viewWHRatio;
@@ -55,8 +57,12 @@ public class CameraPreviewView extends FrameLayout {
         mCamera = camera;
     }
 
-    public void setOnPreviewChangedListener(OnPreviewChangedListener onPreviewChangedListener) {
-        mOnPreviewChangedListener = onPreviewChangedListener;
+    /**
+     * 添加预览事件监听器
+     * @param previewEventListener
+     */
+    public void addPreviewEventListener(PreviewEventListener previewEventListener) {
+        mPreviewEventListenerList.add(previewEventListener);
     }
 
     public void setViewWHRatio(float viewWHRatio) {
@@ -153,7 +159,13 @@ public class CameraPreviewView extends FrameLayout {
          */
         public void autoFocus() {
             mCamera.cancelAutoFocus();
-            mCamera.autoFocus(null);
+            mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                @Override
+                public void onAutoFocus(boolean success, Camera camera) {
+                    for (PreviewEventListener previewEventListener : mPreviewEventListenerList)
+                        previewEventListener.onAutoFocusComplete(success);
+                }
+            });
         }
 
         public void surfaceCreated(SurfaceHolder holder) {
@@ -190,15 +202,22 @@ public class CameraPreviewView extends FrameLayout {
             parameters.setPreviewSize(size.width, size.height);
             mCamera.setParameters(parameters);
 
-            if (null != mOnPreviewChangedListener)
-                mOnPreviewChangedListener.onPreStart();
+            for (PreviewEventListener previewEventListener : mPreviewEventListenerList)
+                previewEventListener.onPrePreviewStart();
 
             // start preview with new settings
             try {
                 mCamera.setPreviewDisplay(holder);
                 mCamera.startPreview();
+
+                for (PreviewEventListener previewEventListener : mPreviewEventListenerList)
+                    previewEventListener.onPreviewStarted();
+
+                autoFocus();
             } catch (Exception e){
                 Log.d(TAG, "Error starting camera preview: " + e.getMessage());
+                for (PreviewEventListener previewEventListener : mPreviewEventListenerList)
+                    previewEventListener.onPreviewFailed();
             }
         }
 
@@ -240,9 +259,29 @@ public class CameraPreviewView extends FrameLayout {
      *
      * @author Martin
      */
-    public interface OnPreviewChangedListener {
+    public interface PreviewEventListener {
 
-        void onPreStart();
+        /**
+         * 预览开始前回调
+         */
+        void onPrePreviewStart();
+
+        /**
+         * 预览成功回调
+         */
+        void onPreviewStarted();
+
+        /**
+         * 预览失败回调
+         */
+        void onPreviewFailed();
+
+        /**
+         * 对焦完成回调
+         *
+         * @param success
+         */
+        void onAutoFocusComplete(boolean success);
 
     }
 

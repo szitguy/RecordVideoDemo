@@ -191,7 +191,7 @@ public class NewRecordVideoActivity extends Activity implements View.OnTouchList
             if (null == (activity = mNewRecordVideoActivityWeakReference.get()))
                 return;
 
-            String filePath = activity.mRecorder.getFilePath().getPath();
+            String filePath = activity.mRecorder.getFilePath();
             if (!TextUtils.isEmpty(filePath)) {
                 FileUtil.deleteFile(filePath);
                 Toast.makeText(activity, "Start record failed.", Toast.LENGTH_SHORT).show();
@@ -218,7 +218,7 @@ public class NewRecordVideoActivity extends Activity implements View.OnTouchList
             if (null == (activity = mNewRecordVideoActivityWeakReference.get()))
                 return;
 
-            String filePath = activity.mRecorder.getFilePath().getPath();
+            String filePath = activity.mRecorder.getFilePath();
             if (!TextUtils.isEmpty(filePath)) {
                 if (activity.isCancelRecord) {
                     FileUtil.deleteFile(filePath);
