@@ -20,7 +20,7 @@ import sz.itguy.wxlikevideo.R;
  */
 public class RecordProgressBar extends View {
 
-    private static final long INVALIDATE_DELAY = 15;
+    private static final long INVALIDATE_DELAY = 10;
 
     // 准备/停止状态
     public static final int STATE_PREPARE = 0;
@@ -66,10 +66,10 @@ public class RecordProgressBar extends View {
     public RecordProgressBar(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.RecordProgressBar);
-        mBgColor = typedArray.getColor(R.attr.rpb_backgroundColor, DEFAULT_BACKGROUND_COLOR);
-        mCancelColor = typedArray.getColor(R.attr.rpb_cancelColor, DEFAULT_CANCEL_COLOR);
-        mRunningColor = typedArray.getColor(R.attr.rpb_runningColor, DEFAULT_RUNNING_COLOR);
-        mRunningTime = typedArray.getInteger(R.attr.rpb_timeLength, DEFAULT_RUNNING_TIME);
+        mBgColor = typedArray.getColor(R.styleable.RecordProgressBar_rpb_backgroundColor, DEFAULT_BACKGROUND_COLOR);
+        mCancelColor = typedArray.getColor(R.styleable.RecordProgressBar_rpb_cancelColor, DEFAULT_CANCEL_COLOR);
+        mRunningColor = typedArray.getColor(R.styleable.RecordProgressBar_rpb_runningColor, DEFAULT_RUNNING_COLOR);
+        mRunningTime = typedArray.getInteger(R.styleable.RecordProgressBar_rpb_timeLength, DEFAULT_RUNNING_TIME);
         typedArray.recycle();
 
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);

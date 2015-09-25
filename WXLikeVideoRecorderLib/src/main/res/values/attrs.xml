@@ -8,4 +8,9 @@
         <attr name="rpb_timeLength" format="integer" />
     </declare-styleable>
 
+    <declare-styleable name="CameraPreviewView" >
+        <attr name="cpv_focusDrawable" format="reference" />
+        <attr name="cpv_indicatorDrawable" format="reference" />
+    </declare-styleable>
+
 </resources>

@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.os.Build;
+import android.util.Log;
 import android.view.Surface;
 
 import java.util.List;
@@ -23,16 +24,33 @@ public class CameraHelper {
     }
 
     /**
-     * 获取默认（背部）相机id，若找不到则返回第一个相机id（0）
+     * 获取默认（背部）相机id
      * @return
      */
     public static int getDefaultCameraID() {
         int camerasCnt = getAvailableCamerasCount();
-        int defaultCameraID = 0;
+        int defaultCameraID = -1;
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         for (int i=0; i <camerasCnt; i++) {
             Camera.getCameraInfo(i, cameraInfo);
             if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+                defaultCameraID = i;
+            }
+        }
+        return defaultCameraID;
+    }
+
+    /**
+     * 获取前置相机id
+     * @return
+     */
+    public static int getFrontCameraID() {
+        int camerasCnt = getAvailableCamerasCount();
+        int defaultCameraID = -1;
+        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        for (int i=0; i <camerasCnt; i++) {
+            Camera.getCameraInfo(i, cameraInfo);
+            if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
                 defaultCameraID = i;
             }
         }
@@ -72,6 +90,7 @@ public class CameraHelper {
             c = Camera.open(cameraId); // attempt to get a Camera instance
         }
         catch (Exception e){
+            Log.e(TAG, "open camera failed: " + e.getMessage());
             // Camera is not available (in use or does not exist)
         }
         return c; // returns null if camera is unavailable
@@ -122,12 +141,13 @@ public class CameraHelper {
      * @return
      */
     public static Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int targetHeight) {
+        final double MIN_ASPECT_RATIO = 1.0;
         final double MAX_ASPECT_RATIO = 1.5;
         Camera.Size optimalSize = null;
         double minDiff = Double.MAX_VALUE;
         for (Camera.Size size : sizes) {
             double ratio = (double) size.width / size.height;
-            if (ratio > MAX_ASPECT_RATIO)
+            if (ratio <= MIN_ASPECT_RATIO || ratio > MAX_ASPECT_RATIO)
                 continue;
             if (Math.abs(size.height - targetHeight) < minDiff) {
                 optimalSize = size;
@@ -226,6 +246,21 @@ public class CameraHelper {
 //            willSetSize = tempSize;
 //
 //        return willSetSize;
+    }
+
+    /**
+     * 设置相机对焦模式
+     *
+     * @param focusMode
+     * @param camera
+     */
+    public static void setCameraFocusMode(String focusMode, Camera camera) {
+        Camera.Parameters parameters = camera.getParameters();
+        List<String> sfm = parameters.getSupportedFocusModes();
+        if (sfm.contains(focusMode)) {
+            parameters.setFocusMode(focusMode);
+        }
+        camera.setParameters(parameters);
     }
 
 }

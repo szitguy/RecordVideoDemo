@@ -51,37 +51,19 @@ public class NewRecordVideoActivity extends Activity implements View.OnTouchList
             finish();
             return;
         }
-        // 初始化相机
-        setupCamera();
-        CameraHelper.setCameraDisplayOrientation(this, cameraId, mCamera);
         // 初始化录像机
         mRecorder = new WXLikeVideoRecorder(this, FileUtil.MEDIA_FILE_DIR);
         mRecorder.setOutputSize(OUTPUT_WIDTH, OUTPUT_HEIGHT);
 
         setContentView(R.layout.activity_new_recorder);
         CameraPreviewView preview = (CameraPreviewView) findViewById(R.id.camera_preview);
-        preview.setCamera(mCamera);
+        preview.setCamera(mCamera, cameraId);
 
         mRecorder.setCameraPreviewView(preview);
 
         findViewById(R.id.button_start).setOnTouchListener(this);
 
         ((TextView) findViewById(R.id.filePathTextView)).setText("请在" + FileUtil.MEDIA_FILE_DIR + "查看录制的视频文件");
-    }
-
-    /**
-     * 设置相机参数
-     */
-    private void setupCamera() {
-        // 设置相机参数
-        Camera.Parameters parameters = mCamera.getParameters();
-        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-        parameters.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_AUTO);
-        parameters.setFocusAreas(null);
-        parameters.setMeteringAreas(null);
-//        Camera.Size size = CameraHelper.getOptimalPreviewSize(parameters.getSupportedPreviewSizes(), 1, 1);
-//        parameters.setPreviewSize(size.width, size.height);
-        mCamera.setParameters(parameters);
     }
 
     @Override
