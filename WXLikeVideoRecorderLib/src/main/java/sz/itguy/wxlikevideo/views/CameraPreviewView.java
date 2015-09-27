@@ -86,7 +86,7 @@ public class CameraPreviewView extends FrameLayout {
         }
         addView(mFocusAnimationView, new LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+                ViewGroup.LayoutParams.WRAP_CONTENT));
         // 定义对焦动画
         mFocusAnimation = AnimationUtils.loadAnimation(context, R.anim.focus_animation);
         mFocusAnimation.setAnimationListener(new Animation.AnimationListener() {
@@ -273,7 +273,7 @@ public class CameraPreviewView extends FrameLayout {
                     for (PreviewEventListener previewEventListener : mPreviewEventListenerList)
                         previewEventListener.onAutoFocusComplete(success);
 
-                    mIndicatorView.setVisibility(GONE);
+                    mIndicatorView.setVisibility(INVISIBLE);
 
                     // 设置对焦方式为视频连续对焦
                     CameraHelper.setCameraFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO, mCamera);
