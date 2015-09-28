@@ -302,13 +302,14 @@ public class CameraPreviewView extends FrameLayout {
 
             mCamera.autoFocus(this);
 
+            mFocusAnimation.cancel();
             mFocusAnimationView.clearAnimation();
             int left = (int) (x - mFocusAnimationView.getWidth() / 2f);
             int top = (int) (y - mFocusAnimationView.getHeight() / 2f);
             int right = left + mFocusAnimationView.getWidth();
             int bottom = top + mFocusAnimationView.getHeight();
             mFocusAnimationView.layout(left, top, right, bottom);
-//            mFocusAnimationView.setVisibility(VISIBLE);
+            mFocusAnimationView.setVisibility(VISIBLE);
             mFocusAnimationView.startAnimation(mFocusAnimation);
         }
 
