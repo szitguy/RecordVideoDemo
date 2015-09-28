@@ -17,6 +17,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -47,6 +48,8 @@ public class CameraPreviewView extends FrameLayout {
     private Animation mFocusAnimation;
     // 相机指示图片
     private final ImageView mIndicatorView;
+    private Animation mIndicatorAnimation;
+
     // 真实相机预览视图
     private RealCameraPreviewView mRealCameraPreviewView;
 
@@ -65,6 +68,9 @@ public class CameraPreviewView extends FrameLayout {
         Drawable indicatorDrawable = typedArray.getDrawable(R.styleable.CameraPreviewView_cpv_indicatorDrawable);
         typedArray.recycle();
 
+        // 添加一个占位视图，解决下面添加的对焦动画视图，若layout调整到他的上面，视图会被切掉的bug
+        addView(new View(getContext()));
+
         // 添加相机画面指示视图
         mIndicatorView = new ImageView(context);
         if (indicatorDrawable == null) {
@@ -75,6 +81,24 @@ public class CameraPreviewView extends FrameLayout {
         addView(mIndicatorView, new LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        // 指示图动画
+        mIndicatorAnimation = AnimationUtils.loadAnimation(context, R.anim.indicator_animation);
+        mIndicatorAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                mIndicatorView.setVisibility(INVISIBLE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
 
         // 添加对焦动画视图
         mFocusAnimationView = new ImageView(context);
@@ -86,7 +110,8 @@ public class CameraPreviewView extends FrameLayout {
         }
         addView(mFocusAnimationView, new LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+
         // 定义对焦动画
         mFocusAnimation = AnimationUtils.loadAnimation(context, R.anim.focus_animation);
         mFocusAnimation.setAnimationListener(new Animation.AnimationListener() {
@@ -158,7 +183,7 @@ public class CameraPreviewView extends FrameLayout {
      *
      * @author Martin
      */
-    private class RealCameraPreviewView extends SurfaceView implements SurfaceHolder.Callback {
+    private class RealCameraPreviewView extends SurfaceView implements SurfaceHolder.Callback, Camera.AutoFocusCallback {
 
         private static final String TAG = "RealCameraPreviewView";
 
@@ -215,6 +240,15 @@ public class CameraPreviewView extends FrameLayout {
             return super.onTouchEvent(event);
         }
 
+        @Override
+        public void onAutoFocus(boolean success, Camera camera) {
+            for (PreviewEventListener previewEventListener : mPreviewEventListenerList)
+                previewEventListener.onAutoFocusComplete(success);
+
+            // 设置对焦方式为视频连续对焦
+            CameraHelper.setCameraFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO, mCamera);
+        }
+
         /**
          * 放大预览视图
          */
@@ -241,8 +275,7 @@ public class CameraPreviewView extends FrameLayout {
          * Metering area is slightly larger as it should contain more info for exposure calculation.
          * As it is very easy to over/under expose
          */
-        @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-        private void focusOnTouch(float x, float y) {
+        private void focusOnTouch(final float x, final float y) {
             Log.d(TAG, "focusOnTouch x = " + x + "y = " + y);
 
             //cancel previous actions
@@ -267,18 +300,7 @@ public class CameraPreviewView extends FrameLayout {
 //                mCamera.setParameters(parameters);
 //            }
 
-            mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                @Override
-                public void onAutoFocus(boolean success, Camera camera) {
-                    for (PreviewEventListener previewEventListener : mPreviewEventListenerList)
-                        previewEventListener.onAutoFocusComplete(success);
-
-                    mIndicatorView.setVisibility(INVISIBLE);
-
-                    // 设置对焦方式为视频连续对焦
-                    CameraHelper.setCameraFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO, mCamera);
-                }
-            });
+            mCamera.autoFocus(this);
 
             mFocusAnimationView.clearAnimation();
             int left = (int) (x - mFocusAnimationView.getWidth() / 2f);
@@ -286,7 +308,7 @@ public class CameraPreviewView extends FrameLayout {
             int right = left + mFocusAnimationView.getWidth();
             int bottom = top + mFocusAnimationView.getHeight();
             mFocusAnimationView.layout(left, top, right, bottom);
-            mFocusAnimationView.setVisibility(VISIBLE);
+//            mFocusAnimationView.setVisibility(VISIBLE);
             mFocusAnimationView.startAnimation(mFocusAnimation);
         }
 
@@ -365,6 +387,7 @@ public class CameraPreviewView extends FrameLayout {
                 for (PreviewEventListener previewEventListener : mPreviewEventListenerList)
                     previewEventListener.onPreviewStarted();
 
+                mIndicatorView.startAnimation(mIndicatorAnimation);
                 focusOnTouch(CameraPreviewView.this.getWidth() / 2f, CameraPreviewView.this.getHeight() / 2f);
             } catch (Exception e) {
                 Log.d(TAG, "Error starting camera preview: " + e.getMessage());
