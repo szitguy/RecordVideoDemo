@@ -91,6 +91,8 @@ public class CameraPreviewView extends FrameLayout {
 
             @Override
             public void onAnimationEnd(Animation animation) {
+                // 若使用GONE会导致其他视图布局重回初始状态，可能是某个View的layout改变会刷新其他视
+                // 图的layout
                 mIndicatorView.setVisibility(INVISIBLE);
             }
 
