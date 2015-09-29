@@ -29,6 +29,8 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
 
     private static final String TAG = "InstantVideoRecorder";
 
+    // 最长录制时间6秒
+    private static final long MAX_RECORD_TIME = 6000;
     // 帧率
     private static final int FRAME_RATE = 30;
     // 声音采样率
@@ -72,9 +74,16 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
     // 相机预览视图
     private CameraPreviewView mCameraPreviewView;
 
+    // 录制完成监听器
+    private OnRecordCompleteListener mOnRecordCompleteListener;
+
     public WXLikeVideoRecorder(Context context, String folder) {
         mContext = context;
         mFolder = folder;
+    }
+
+    public void setOnRecordCompleteListener(OnRecordCompleteListener onRecordCompleteListener) {
+        this.mOnRecordCompleteListener = onRecordCompleteListener;
     }
 
     public boolean isRecording() {
@@ -305,7 +314,14 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
                 if (RECORD_LENGTH <= 0) {
                     try {
                         Log.v(TAG, "Writing Frame");
-                        long t = 1000 * (System.currentTimeMillis() - startTime);
+                        long pastTime = System.currentTimeMillis() - startTime;
+                        if (pastTime >= MAX_RECORD_TIME) {
+                            stopRecording();
+                            if (mOnRecordCompleteListener != null)
+                                mOnRecordCompleteListener.onRecordComplete();
+                            return;
+                        }
+                        long t = 1000 * pastTime;
                         if (t > recorder.getTimestamp()) {
                             recorder.setTimestamp(t);
                         }
@@ -433,6 +449,20 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
                 Log.v(TAG,"audioRecord released");
             }
         }
+    }
+
+    /**
+     * 录制完成监听器
+     *
+     * @author Martin
+     */
+    public interface OnRecordCompleteListener {
+
+        /**
+         * 录制完成回调
+         */
+        void onRecordComplete();
+
     }
 
 }
