@@ -1,6 +1,7 @@
 package sz.itguy.recordvideodemo;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -69,8 +70,15 @@ public class NewRecordVideoActivity extends Activity implements View.OnTouchList
     @Override
     protected void onPause() {
         super.onPause();
-        // 页面销毁时要停止录制
-        stopRecord();
+        if (mRecorder != null) {
+            boolean recording = mRecorder.isRecording();
+            // 页面不可见就要停止录制
+            mRecorder.stopRecording();
+            // 录制时退出，直接舍弃视频
+            if (recording) {
+                FileUtil.deleteFile(mRecorder.getFilePath());
+            }
+        }
         releaseCamera();              // release the camera immediately on pause event
         finish();
     }
@@ -120,6 +128,18 @@ public class NewRecordVideoActivity extends Activity implements View.OnTouchList
      */
     private void stopRecord() {
         mRecorder.stopRecording();
+        String videoPath = mRecorder.getFilePath();
+        // 没有录制视频
+        if (null == videoPath) {
+            return;
+        }
+        // 若取消录制，则删除文件，否则通知宿主页面发送视频
+        if (isCancelRecord) {
+            FileUtil.deleteFile(videoPath);
+        } else {
+            // 告诉宿主页面录制视频的路径
+            startActivity(new Intent(this, PlayVideoActiviy.class).putExtra(PlayVideoActiviy.KEY_FILE_PATH, videoPath));
+        }
     }
 
     @Override

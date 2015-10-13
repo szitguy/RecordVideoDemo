@@ -38,6 +38,12 @@
             </intent-filter>
 
         </activity>
+
+        <activity
+            android:name="sz.itguy.recordvideodemo.PlayVideoActiviy"
+            android:screenOrientation="portrait" >
+        </activity>
+
     </application>
 
 </manifest>
