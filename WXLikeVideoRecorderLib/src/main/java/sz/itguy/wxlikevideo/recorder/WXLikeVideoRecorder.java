@@ -184,8 +184,7 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
         if (mCameraPreviewView.getCameraId() == CameraHelper.getFrontCameraID()) {
             w = (int) (1f * outputHeight / outputWidth * imageHeight);
             h = imageHeight;
-            x = imageWidth - mCameraPreviewView.getRealCameraPreviewView().getTop();
-            Log.e(TAG, "crop x: " + x);
+            x = (int) (1f * imageWidth / mCameraPreviewView.getRealCameraPreviewView().getHeight() * (mCameraPreviewView.getRealCameraPreviewView().getHeight() - mCameraPreviewView.getHeight()));
             y = 0;
             transpose = "7";
         }
