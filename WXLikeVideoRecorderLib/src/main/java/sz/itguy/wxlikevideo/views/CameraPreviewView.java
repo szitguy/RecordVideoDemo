@@ -41,6 +41,7 @@ public class CameraPreviewView extends FrameLayout {
     private List<PreviewEventListener> mPreviewEventListenerList = new ArrayList<PreviewEventListener>();
 
     private Camera mCamera;
+    private int mCameraId;
     private float viewWHRatio;
 
     // 对焦动画视图
@@ -133,11 +134,27 @@ public class CameraPreviewView extends FrameLayout {
     }
 
     /**
+     * 获取真实相机预览视图
+     * @return
+     */
+    public View getRealCameraPreviewView() {
+        return mRealCameraPreviewView;
+    }
+
+    /**
      * 获取相机
      * @return
      */
     public Camera getCamera() {
         return mCamera;
+    }
+
+    /**
+     * 获取CameraId
+     * @return
+     */
+    public int getCameraId() {
+        return mCameraId;
     }
 
     /**
@@ -149,6 +166,7 @@ public class CameraPreviewView extends FrameLayout {
     @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     public void setCamera(Camera camera, int cameraId) {
         mCamera = camera;
+        mCameraId = cameraId;
         CameraHelper.setCameraDisplayOrientation((Activity) getContext(), cameraId, mCamera);
 
         if (mRealCameraPreviewView != null)
@@ -372,6 +390,7 @@ public class CameraPreviewView extends FrameLayout {
             // reformatting changes here
             Camera.Parameters parameters = mCamera.getParameters();
             Camera.Size size = CameraHelper.getOptimalPreviewSize(parameters.getSupportedPreviewSizes(), Math.min(w, h));
+            Log.d(TAG, "OptimalPreviewSize w: " + size.width + "---h: " + size.height);
             parameters.setPreviewSize(size.width, size.height);
             mCamera.setParameters(parameters);
             // 预览尺寸改变，请求重新布局、计算宽高

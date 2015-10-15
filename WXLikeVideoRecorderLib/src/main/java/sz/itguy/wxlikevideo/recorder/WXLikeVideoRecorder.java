@@ -18,6 +18,7 @@ import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 
 import sz.itguy.utils.FileUtil;
+import sz.itguy.wxlikevideo.camera.CameraHelper;
 import sz.itguy.wxlikevideo.views.CameraPreviewView;
 
 /**
@@ -174,8 +175,21 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
      * 初始化帧过滤器
      */
     private void initFrameFilter() {
-//        mFilter = new FFmpegFrameFilter(String.format("crop=w=%d:h=%d:x=0:y=0,transpose=clock", (int) (1f * outputHeight / outputWidth * imageHeight), imageHeight), imageWidth, imageHeight);
-        mFilter = new FFmpegFrameFilter(String.format("crop=w=%d:h=%d:x=0:y=0,transpose=clock", (int) (1f * outputHeight / outputWidth * imageHeight), imageHeight), imageWidth, imageHeight);
+        int w = (int) (1f * outputHeight / outputWidth * imageHeight);
+        int h = imageHeight;
+        int x = 0;
+        int y = 0;
+        String transpose = "clock";
+        // 区分前置摄像头处理
+        if (mCameraPreviewView.getCameraId() == CameraHelper.getFrontCameraID()) {
+            w = (int) (1f * outputHeight / outputWidth * imageHeight);
+            h = imageHeight;
+            x = imageWidth - mCameraPreviewView.getRealCameraPreviewView().getTop();
+            Log.e(TAG, "crop x: " + x);
+            y = 0;
+            transpose = "7";
+        }
+        mFilter = new FFmpegFrameFilter(String.format("crop=w=%d:h=%d:x=%d:y=%d,transpose=%s", w, h, x, y, transpose), imageWidth, imageHeight);
         mFilter.setPixelFormat(org.bytedeco.javacpp.avutil.AV_PIX_FMT_NV21); // default camera format on Android
     }
 
