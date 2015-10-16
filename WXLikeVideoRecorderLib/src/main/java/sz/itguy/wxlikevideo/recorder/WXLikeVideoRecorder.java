@@ -6,6 +6,7 @@ import android.hardware.Camera;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.bytedeco.javacv.FFmpegFrameFilter;
@@ -18,7 +19,6 @@ import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 
 import sz.itguy.utils.FileUtil;
-import sz.itguy.wxlikevideo.camera.CameraHelper;
 import sz.itguy.wxlikevideo.views.CameraPreviewView;
 
 /**
@@ -59,9 +59,6 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
     private long startTime;
     private boolean recording;
 
-//    private Camera mCamera;
-//    private int mCameraId;
-
     /* The number of seconds in the continuous record loop (or 0 to disable loop). */
     final int RECORD_LENGTH = /*6*/0;
     Frame[] images;
@@ -71,12 +68,17 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
     private Frame yuvImage = null;
 
     // 图片帧过滤器
-    private FFmpegFrameFilter mFilter;
+    private FFmpegFrameFilter mFrameFilter;
     // 相机预览视图
     private CameraPreviewView mCameraPreviewView;
 
     // 录制完成监听器
     private OnRecordCompleteListener mOnRecordCompleteListener;
+
+    /**
+     * 帧数据处理配置
+     */
+    private String mFilters;
 
     public WXLikeVideoRecorder(Context context, String folder) {
         mContext = context;
@@ -172,38 +174,49 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
 //    }
 
     /**
+     * 设置帧图像数据处理参数
+     * @param filters
+     */
+    public void setFilters(String filters) {
+        mFilters = filters;
+    }
+
+    /**
+     * 生成处理配置
+     * @param w 裁切宽度
+     * @param h 裁切高度
+     * @param x 裁切起始x坐标
+     * @param y 裁切起始y坐标
+     * @param transpose 图像旋转参数
+     * @return 帧图像数据处理参数
+     */
+    public static String generateFilters(int w, int h, int x, int y, String transpose) {
+        return String.format("crop=w=%d:h=%d:x=%d:y=%d,transpose=%s", w, h, x, y, transpose);
+    }
+
+    /**
      * 初始化帧过滤器
      */
     private void initFrameFilter() {
-        int w = (int) (1f * outputHeight / outputWidth * imageHeight);
-        int h = imageHeight;
-        int x = 0;
-        int y = 0;
-        String transpose = "clock";
-        // 区分前置摄像头处理
-        if (mCameraPreviewView.getCameraId() == CameraHelper.getFrontCameraID()) {
-            w = (int) (1f * outputHeight / outputWidth * imageHeight);
-            h = imageHeight;
-            x = (int) (1f * imageWidth / mCameraPreviewView.getRealCameraPreviewView().getHeight() * (mCameraPreviewView.getRealCameraPreviewView().getHeight() - mCameraPreviewView.getHeight()));
-            y = 0;
-            transpose = "7";
+        if (TextUtils.isEmpty(mFilters)) {
+            mFilters = generateFilters((int) (1f * outputHeight / outputWidth * imageHeight), imageHeight, 0, 0, "clock");
         }
-        mFilter = new FFmpegFrameFilter(String.format("crop=w=%d:h=%d:x=%d:y=%d,transpose=%s", w, h, x, y, transpose), imageWidth, imageHeight);
-        mFilter.setPixelFormat(org.bytedeco.javacpp.avutil.AV_PIX_FMT_NV21); // default camera format on Android
+        mFrameFilter = new FFmpegFrameFilter(mFilters, imageWidth, imageHeight);
+        mFrameFilter.setPixelFormat(org.bytedeco.javacpp.avutil.AV_PIX_FMT_NV21); // default camera format on Android
     }
 
     /**
      * 释放帧过滤器
      */
     private void releaseFrameFilter() {
-        if (null != mFilter) {
+        if (null != mFrameFilter) {
             try {
-                mFilter.release();
+                mFrameFilter.release();
             } catch (FrameFilter.Exception e) {
                 e.printStackTrace();
             }
         }
-        mFilter = null;
+        mFrameFilter = null;
     }
 
     /**
@@ -224,7 +237,7 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
         initFrameFilter();
         try {
             recorder.start();
-            mFilter.start();
+            mFrameFilter.start();
             startTime = System.currentTimeMillis();
             recording = true;
             audioThread.start();
@@ -340,7 +353,6 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
                         }
                         recordFrame(yuvImage);
                     } catch (Exception e) {
-                        Log.v(TAG, e.getMessage());
                         e.printStackTrace();
                     }
                 }
@@ -355,9 +367,9 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
      * @throws FrameRecorder.Exception
      */
     private void recordFrame(Frame frame) throws FrameRecorder.Exception, FrameFilter.Exception {
-        mFilter.push(frame);
+        mFrameFilter.push(frame);
         Frame filteredFrame;
-        while ((filteredFrame = mFilter.pull()) != null) {
+        while ((filteredFrame = mFrameFilter.pull()) != null) {
             recorder.record(filteredFrame);
         }
     }

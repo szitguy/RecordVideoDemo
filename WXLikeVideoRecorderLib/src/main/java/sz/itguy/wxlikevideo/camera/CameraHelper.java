@@ -129,6 +129,7 @@ public class CameraHelper {
         } else {  // back-facing
             result = (info.orientation - degrees + 360) % 360;
         }
+        Log.d(TAG, "camera display orientation: " + result);
         camera.setDisplayOrientation(result);
 
         return result;
