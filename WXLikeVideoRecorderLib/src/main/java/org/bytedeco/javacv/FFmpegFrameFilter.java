@@ -55,6 +55,8 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import sz.itguy.utils.SystemVersionUtil;
+
 import static org.bytedeco.javacpp.avcodec.AVPacket;
 import static org.bytedeco.javacpp.avcodec.AVPicture;
 import static org.bytedeco.javacpp.avcodec.avpicture_fill;
@@ -229,7 +231,6 @@ public class FFmpegFrameFilter extends FrameFilter {
             /* buffer video sink: to terminate the filter chain. */
             ret = avfilter_graph_create_filter(buffersink_ctx = new AVFilterContext(), buffersink, "out",
                                                null, null, filter_graph);
-
             if (ret < 0) {
                 throw new Exception("avfilter_graph_create_filter(): Cannot create buffer sink.");
             }
@@ -357,15 +358,27 @@ public class FFmpegFrameFilter extends FrameFilter {
         } else {
             frame.imageStride = frame.imageWidth;
             int size = avpicture_get_size(filt_frame.format(), frame.imageWidth, frame.imageHeight);
-            if (image_ptr[0] == null || image_ptr[0].capacity() < size) {
-                image_ptr[0] = new BytePointer(size);
-                image_buf[0] = image_ptr[0].asBuffer();
+            // Fix bug on Android4.0，check out https://github.com/bytedeco/javacpp/issues/39
+            if (SystemVersionUtil.hasJellyBean()) {
+                if (image_ptr[0] == null || image_ptr[0].capacity() < size) {
+                    image_ptr[0] = new BytePointer(size);
+                    image_buf[0] = image_ptr[0].asBuffer();
+                }
+                frame.image = image_buf;
+                frame.image[0].position(0).limit(size);
+                frame.imageChannels = 2;
+                ret = avpicture_layout(new AVPicture(filt_frame), filt_frame.format(),
+                        frame.imageWidth, frame.imageHeight, image_ptr[0].position(0), image_ptr[0].capacity());
+            } else {
+                if (image_buf[0] == null || image_buf[0].capacity() < size) {
+                    image_buf[0] = ByteBuffer.allocateDirect(size).order(ByteOrder.nativeOrder());
+                }
+                frame.image = image_buf;
+                frame.image[0].position(0).limit(size);
+                frame.imageChannels = 2;
+                ret = avpicture_layout(new AVPicture(filt_frame), filt_frame.format(),
+                        frame.imageWidth, frame.imageHeight, (ByteBuffer) frame.image[0].position(0), frame.image[0].capacity());
             }
-            frame.image = image_buf;
-            frame.image[0].position(0).limit(size);
-            frame.imageChannels = 2;
-            ret = avpicture_layout(new AVPicture(filt_frame), filt_frame.format(),
-                    frame.imageWidth, frame.imageHeight, image_ptr[0].position(0), image_ptr[0].capacity());
         }
         return frame;
     }
