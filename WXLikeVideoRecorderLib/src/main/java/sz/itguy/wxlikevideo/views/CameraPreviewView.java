@@ -1,15 +1,14 @@
 package sz.itguy.wxlikevideo.views;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
-import android.os.Build;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -38,6 +37,15 @@ import sz.itguy.wxlikevideo.camera.CameraHelper;
  */
 public class CameraPreviewView extends FrameLayout {
 
+    public static final String TAG = "CameraPreviewView";
+
+    /**
+     * 开启相机延迟
+     */
+    private static final long OPEN_CAMERA_DELAY = 500;
+
+    private boolean isIndicatorShowed = false;
+
     private List<PreviewEventListener> mPreviewEventListenerList = new ArrayList<PreviewEventListener>();
 
     private Camera mCamera;
@@ -64,6 +72,8 @@ public class CameraPreviewView extends FrameLayout {
 
     public CameraPreviewView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        setBackgroundColor(Color.BLACK);
+
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.CameraPreviewView);
         Drawable focusDrawable = typedArray.getDrawable(R.styleable.CameraPreviewView_cpv_focusDrawable);
         Drawable indicatorDrawable = typedArray.getDrawable(R.styleable.CameraPreviewView_cpv_indicatorDrawable);
@@ -163,15 +173,20 @@ public class CameraPreviewView extends FrameLayout {
      * @param camera 相机
      * @param cameraId 相机id
      */
-    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     public void setCamera(Camera camera, int cameraId) {
         mCamera = camera;
         mCameraId = cameraId;
-        CameraHelper.setCameraDisplayOrientation((Activity) getContext(), cameraId, mCamera);
+        CameraHelper.setCameraDisplayOrientation((Activity) getContext(), mCameraId, mCamera);
 
         if (mRealCameraPreviewView != null)
             removeView(mRealCameraPreviewView);
-        addView((mRealCameraPreviewView = new RealCameraPreviewView(getContext(), camera)), 0);
+        long openDelay = isIndicatorShowed ? 0 : OPEN_CAMERA_DELAY;
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                addView((mRealCameraPreviewView = new RealCameraPreviewView(getContext(), mCamera)), 0);
+            }
+        }, openDelay);
     }
 
     /**
@@ -407,7 +422,10 @@ public class CameraPreviewView extends FrameLayout {
                 for (PreviewEventListener previewEventListener : mPreviewEventListenerList)
                     previewEventListener.onPreviewStarted();
 
-                mIndicatorView.startAnimation(mIndicatorAnimation);
+                if (!isIndicatorShowed) {
+                    mIndicatorView.startAnimation(mIndicatorAnimation);
+                    isIndicatorShowed = true;
+                }
                 focusOnTouch(CameraPreviewView.this.getWidth() / 2f, CameraPreviewView.this.getHeight() / 2f);
             } catch (Exception e) {
                 Log.d(TAG, "Error starting camera preview: " + e.getMessage());
