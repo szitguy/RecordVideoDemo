@@ -42,7 +42,7 @@ public class CameraPreviewView extends FrameLayout {
     /**
      * 开启相机延迟
      */
-    private static final long OPEN_CAMERA_DELAY = 500;
+    private static final long OPEN_CAMERA_DELAY = 350;
 
     private boolean isIndicatorShowed = false;
 
@@ -209,6 +209,13 @@ public class CameraPreviewView extends FrameLayout {
         int wms = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY);
         int hms = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
         super.onMeasure(wms, hms);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        mPreviewEventListenerList.clear();
+        mPreviewEventListenerList = null;
     }
 
     /**

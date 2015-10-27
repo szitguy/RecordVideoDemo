@@ -72,9 +72,6 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
     // 相机预览视图
     private CameraPreviewView mCameraPreviewView;
 
-    // 录制完成监听器
-    private OnRecordCompleteListener mOnRecordCompleteListener;
-
     /**
      * 帧数据处理配置
      */
@@ -83,10 +80,6 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
     public WXLikeVideoRecorder(Context context, String folder) {
         mContext = context;
         mFolder = folder;
-    }
-
-    public void setOnRecordCompleteListener(OnRecordCompleteListener onRecordCompleteListener) {
-        this.mOnRecordCompleteListener = onRecordCompleteListener;
     }
 
     public boolean isRecording() {
@@ -325,7 +318,7 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
     public void onPreviewFrame(byte[] data, Camera camera) {
         try {
             if (audioRecord == null || audioRecord.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING) {
-                startTime = System.currentTimeMillis();
+//                startTime = System.currentTimeMillis();
                 return;
             }
             if (RECORD_LENGTH > 0) {
@@ -343,8 +336,6 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
                         long pastTime = System.currentTimeMillis() - startTime;
                         if (pastTime >= MAX_RECORD_TIME) {
                             stopRecording();
-                            if (mOnRecordCompleteListener != null)
-                                mOnRecordCompleteListener.onRecordComplete();
                             return;
                         }
                         long t = 1000 * pastTime;
