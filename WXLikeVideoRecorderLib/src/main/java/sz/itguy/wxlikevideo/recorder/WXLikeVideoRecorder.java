@@ -56,7 +56,17 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
     volatile boolean runAudioThread = true;
 
     private volatile FFmpegFrameRecorder recorder;
+
+    /**
+     * 录制开始时间
+     */
     private long startTime;
+
+    /**
+     * 录制停止时间
+     */
+    private long stopTime;
+
     private boolean recording;
 
     /* The number of seconds in the continuous record loop (or 0 to disable loop). */
@@ -112,6 +122,14 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
      */
     public long getStartTime() {
         return startTime;
+    }
+
+    /**
+     * 获取停止时间
+     * @return
+     */
+    public long getStopTime() {
+        return stopTime;
     }
 
     //---------------------------------------
@@ -246,6 +264,8 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
         if (!recording)
             return;
 
+        stopTime = System.currentTimeMillis();
+
         runAudioThread = false;
         try {
             audioThread.join();
@@ -317,10 +337,11 @@ public class WXLikeVideoRecorder implements Camera.PreviewCallback, CameraPrevie
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         try {
-            if (audioRecord == null || audioRecord.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING) {
+            // 去掉必须录制音频的限制，可以录制无声视频
+//            if (audioRecord == null || audioRecord.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING) {
 //                startTime = System.currentTimeMillis();
-                return;
-            }
+//                return;
+//            }
             if (RECORD_LENGTH > 0) {
                 int i = imagesIndex++ % images.length;
                 yuvImage = images[i];
