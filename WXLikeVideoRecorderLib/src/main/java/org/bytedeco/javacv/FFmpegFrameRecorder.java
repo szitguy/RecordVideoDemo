@@ -1005,8 +1005,8 @@ public class FFmpegFrameRecorder extends FrameRecorder {
                     limit((samples_in[i].position() + inputSize) * inputDepth);
         }
         while (true) {
-            int inputCount = samples != null ? (samples_in[0].limit() - samples_in[0].position()) / (inputChannels * inputDepth) : 0;
-            int outputCount = (samples_out[0].limit() - samples_out[0].position()) / (outputChannels * outputDepth);
+            long inputCount = samples != null ? (samples_in[0].limit() - samples_in[0].position()) / (inputChannels * inputDepth) : 0;
+            long outputCount = (samples_out[0].limit() - samples_out[0].position()) / (outputChannels * outputDepth);
             inputCount = Math.min(inputCount, (outputCount * sampleRate + audio_c.sample_rate() - 1) / audio_c.sample_rate());
             for (int i = 0; samples != null && i < samples.length; i++) {
                 samples_in_ptr.put(i, samples_in[i]);
@@ -1014,7 +1014,7 @@ public class FFmpegFrameRecorder extends FrameRecorder {
             for (int i = 0; i < samples_out.length; i++) {
                 samples_out_ptr.put(i, samples_out[i]);
             }
-            if ((ret = swr_convert(samples_convert_ctx, samples_out_ptr, outputCount, samples_in_ptr, inputCount)) < 0) {
+            if ((ret = swr_convert(samples_convert_ctx, samples_out_ptr, (int) outputCount, samples_in_ptr, (int) inputCount)) < 0) {
                 throw new Exception("swr_convert() error " + ret + ": Cannot convert audio samples.");
             } else if (ret == 0) {
                 break;
@@ -1028,10 +1028,10 @@ public class FFmpegFrameRecorder extends FrameRecorder {
 
             if (samples == null || samples_out[0].position() >= samples_out[0].limit()) {
                 frame.nb_samples(audio_input_frame_size);
-                avcodec_fill_audio_frame(frame, audio_c.channels(), outputFormat, samples_out[0], samples_out[0].limit(), 0);
+                avcodec_fill_audio_frame(frame, audio_c.channels(), outputFormat, samples_out[0], (int) samples_out[0].limit(), 0);
                 for (int i = 0; i < samples_out.length; i++) {
                     frame.data(i, samples_out[i].position(0));
-                    frame.linesize(i, samples_out[i].limit());
+                    frame.linesize(i, (int) samples_out[i].limit());
                 }
                 frame.quality(audio_c.global_quality());
                 record(frame);
